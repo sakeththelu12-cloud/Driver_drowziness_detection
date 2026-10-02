@@ -1,0 +1,281 @@
+/* ==========================================================
+   ALERTNESS — Driver Monitoring System
+   Design language: automotive instrument cluster / night HUD
+   ========================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:            #0a0d12;
+  --panel:         #10151d;
+  --panel-raised:  #161c26;
+  --line:          #232b38;
+  --text:          #e7ecf3;
+  --text-dim:      #7c8798;
+  --cyan:          #2dd4bf;
+  --cyan-dim:      rgba(45,212,191,0.18);
+  --amber:         #f5a623;
+  --red:           #ff4d4d;
+  --red-dim:       rgba(255,77,77,0.18);
+  --font-display:  'Space Grotesk', sans-serif;
+  --font-mono:     'JetBrains Mono', monospace;
+}
+
+*{ box-sizing: border-box; }
+
+html,body{
+  margin:0; padding:0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  min-height:100vh;
+}
+
+body{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 20% -10%, rgba(45,212,191,0.06), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(245,166,35,0.05), transparent 45%),
+    var(--bg);
+}
+
+.cluster{
+  width: 100%;
+  max-width: 1180px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  overflow: hidden;
+  box-shadow: 0 40px 80px -30px rgba(0,0,0,0.7);
+}
+
+/* ---------- Header ---------- */
+.cluster__header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 18px 26px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--panel-raised), var(--panel));
+}
+
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand__mark{
+  color: var(--cyan);
+  font-size: 22px;
+  filter: drop-shadow(0 0 6px var(--cyan-dim));
+}
+.brand__text{ display:flex; flex-direction:column; line-height:1.15; }
+.brand__title{
+  font-family: var(--font-display);
+  font-weight:700;
+  letter-spacing: 0.14em;
+  font-size: 16px;
+}
+.brand__subtitle{
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+.clock{
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+}
+
+/* ---------- Body layout ---------- */
+.cluster__body{
+  display:grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 1px;
+  background: var(--line);
+}
+@media (max-width: 860px){
+  .cluster__body{ grid-template-columns: 1fr; }
+}
+
+/* ---------- Viewport (windshield) ---------- */
+.viewport{
+  position:relative;
+  background: #000;
+  aspect-ratio: 4 / 3;
+  overflow:hidden;
+}
+.viewport video{
+  width:100%; height:100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* mirror, like a mirror-mounted cabin cam */
+  filter: saturate(0.9) contrast(1.05);
+}
+.viewport canvas{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+}
+
+.viewport__scanline{
+  position:absolute; inset:0;
+  background: repeating-linear-gradient(
+    0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px,
+    transparent 1px, transparent 3px
+  );
+  pointer-events:none;
+  mix-blend-mode: overlay;
+}
+
+.viewport__badge{
+  position:absolute;
+  top:16px; left:16px;
+  display:flex; align-items:center; gap:8px;
+  padding: 7px 12px;
+  border-radius: 100px;
+  background: rgba(10,13,18,0.72);
+  border:1px solid var(--line);
+  backdrop-filter: blur(6px);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+.viewport__badge-dot{
+  width:8px; height:8px; border-radius:50%;
+  background: var(--text-dim);
+  box-shadow: 0 0 8px currentColor;
+}
+.viewport__badge.state-alert .viewport__badge-dot{ background: var(--cyan); color: var(--cyan); }
+.viewport__badge.state-drowsy .viewport__badge-dot{ background: var(--red); color: var(--red); animation: pulse 0.8s infinite; }
+
+@keyframes pulse{
+  0%,100%{ opacity:1; }
+  50%{ opacity:0.35; }
+}
+
+.viewport__prompt{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:16px;
+  background: rgba(10,13,18,0.88);
+  text-align:center;
+  padding: 24px;
+}
+.viewport__prompt p{
+  color: var(--text-dim);
+  font-size: 13px;
+  max-width: 260px;
+  margin:0;
+}
+.viewport__prompt.hidden{ display:none; }
+
+.btn{
+  font-family: var(--font-display);
+  font-weight:600;
+  letter-spacing: 0.04em;
+  font-size: 13px;
+  color: #06110f;
+  background: var(--cyan);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 22px;
+  cursor:pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 8px 24px -6px var(--cyan-dim);
+}
+.btn:hover{ transform: translateY(-1px); }
+.btn:focus-visible{ outline: 2px solid var(--cyan); outline-offset:3px; }
+
+/* ---------- Instrument panel ---------- */
+.panel{
+  background: var(--panel);
+  padding: 22px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.gauge-card{
+  display:flex; flex-direction:column; align-items:center;
+  padding: 14px 8px 6px;
+}
+.gauge{ width: 100%; max-width: 260px; overflow:visible; }
+.gauge__track{
+  fill:none; stroke: var(--line); stroke-width: 14; stroke-linecap: round;
+}
+.gauge__fill{
+  fill:none; stroke: var(--cyan); stroke-width: 14; stroke-linecap: round;
+  stroke-dasharray: 283; stroke-dashoffset: 283;
+  transition: stroke-dashoffset 0.35s ease, stroke 0.35s ease;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+.gauge__needle{
+  stroke: var(--text); stroke-width: 3; stroke-linecap: round;
+  transform-origin: 110px 120px;
+  transition: transform 0.35s ease;
+}
+.gauge__hub{ fill: var(--text); }
+
+.gauge-card__reading{
+  display:flex; flex-direction:column; align-items:center;
+  margin-top: -18px;
+}
+.gauge-card__value{
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight:700;
+}
+.gauge-card__unit{
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+}
+
+.readout{
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  padding: 14px 4px;
+}
+.readout__row{
+  display:flex; justify-content:space-between;
+  padding: 7px 0;
+  font-size: 12.5px;
+}
+.readout__label{ color: var(--text-dim); }
+.readout__value{ color: var(--text); font-weight:500; }
+
+.log{ flex:1; min-height: 0; display:flex; flex-direction:column; }
+.log__title{
+  font-size: 10px; letter-spacing: 0.12em; color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.log__list{
+  list-style:none; margin:0; padding:0;
+  overflow-y:auto;
+  max-height: 140px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.log__list li{
+  font-size: 11.5px;
+  color: var(--text-dim);
+  border-left: 2px solid var(--line);
+  padding-left: 8px;
+}
+.log__list li.is-drowsy{ border-left-color: var(--red); color: var(--text); }
+
+/* ---------- Footer ---------- */
+.cluster__footer{
+  padding: 12px 26px;
+  border-top: 1px solid var(--line);
+  font-size: 10.5px;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+  text-align:center;
+  background: var(--panel-raised);
+}
+
+/* alert state on the whole cluster */
+.cluster.is-drowsy{
+  box-shadow: 0 0 0 2px var(--red), 0 40px 90px -30px rgba(255,77,77,0.35);
+}
+
+@media (prefers-reduced-motion: reduce){
+  * { animation: none !important; transition: none !important; }
+}
